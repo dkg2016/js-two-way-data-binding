@@ -5,124 +5,39 @@
 </head>
 <body>
 	<div id="container">
-		<input type="text" kg-model="text">
-		{{ text }}
+		<input id="input" type="text" oninput="textInput(event)">
+		<p id="show"></p>
+
 	</div>
 	<script>
 
-		function detecter (obj, kg) {
-			Object.keys(obj).forEach(function (key) {
-				exchange(kg, key, obj[key]);
-			});
+		let obj = {
+			msg: 'input内容'
 		}
 
-		function exchange (obj, key, val) {
-			var dep = new Dep();
-			Object.defineProperty(obj, key, {
+		let data = {}
+
+		Object.keys(obj).forEach(key => {
+			Object.defineProperty(data,key,{
 				get: function () {
-					// 添加订阅者watcher到主题对象Dep
-					if (Dep.target) dep.addSub(Dep.target);
-					return val
+					return obj[key]
 				},
-				set: function (newVal) {
-					if (newVal === val) return
-          	val = newVal;
-        	// 作为发布者发出通知
-        	dep.notify();
+				set: function (val) {
+					obj[key] = val
+					document.getElementById('input').value = val
+					document.getElementById('show').innerText = val
+
 				}
-			});
-		}
-		function nodeToFragment (node, kg) {
-			var flag = document.createDocumentFragment();
-			var child;
-			
-			while (child = node.firstChild) {
-				toHtml(child, kg);
-				flag.append(child); 
-			}
-			return flag;
-		}
-		function toHtml (node, kg) {
-			//正则表达式，匹配html标签
-			var reg = /\{\{(.*)\}\}/;
-			// 节点类型为元素
-			if (node.nodeType === 1) {
-				var attr = node.attributes;
-				// 遍历所有属性
-				for (var i = 0; i < attr.length; i++) {
-					if (attr[i].nodeName == 'kg-model') {
-						var name = attr[i].nodeValue; 
-						// 获取属性名
-						node.addEventListener('input', function (e) {
-							kg[name] = e.target.value;
-						});
-						node.value = kg[name]; 
-						node.removeAttribute('kg-model');
-					}
-				};
-			}
-			// 节点类型为text
-			if (node.nodeType === 3) {
-				if (reg.test(node.nodeValue)) {
-					// 获取匹配到的字符串
-					var name = RegExp.$1; 
-					name = name.trim();
-					// node.nodeValue = kg[name]; // 将data的值赋给该node
-					new Watcher(kg, node, name);		
-				}
-			}
-		}
-		function Watcher (kg, node, name) {
-			Dep.target = this;	
-			this.name = name;
-			this.node = node;
-			this.kg = kg;
-			this.update();
-			Dep.target = null;
-		}
-    Watcher.prototype = {
-    	update: function () {
-    		this.get();
-    		this.node.nodeValue = this.value;
-    	},
-    	// 获取data中的属性值
-    	get: function () {
-    		this.value = this.kg[this.name]; // 触发相应属性的get
-    	}
-    }
-		function Dep () {
-			this.subs = []
-		}
-		Dep.prototype = {
-	    addSub: function(sub) {
-	      this.subs.push(sub);
-	    },
-	    notify: function() {
-        this.subs.forEach(function(sub) {
-          sub.update();
-        });
-	    }
-		};
+			})
+		})
 
+		document.getElementById('input').value = data.msg
+		document.getElementById('show').innerText = data.msg
 
-		function Dkg (options) {
-			this.data = options.data;
-			var data = this.data;
-			detecter(data, this);
-			var id = options.el;
-			var dom = nodeToFragment(document.getElementById(id), this);
-			// 编译完成后，将dom返回到app中
-			document.getElementById(id).appendChild(dom); 
+		function textInput (e) {
+			data.msg = e.target.value
 		}
-
-
-		//例子
-		var kg = new Dkg({
-			el: 'container',
-			data: {
-				text: 'hello world!'
-			}
-		});
+		
 	</script>
 
 </body>
